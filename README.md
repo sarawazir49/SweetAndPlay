@@ -1,83 +1,84 @@
-
 # SweetAndPlay - Toys & Candy Store Management System
 
-A console-based inventory management system for managing toys and candy products. Built with C# .NET.
+A console-based inventory management system for a Swedish toys and candy store. Built with **C# .NET 10**.
 
 ## Overview
-This application manages a mixed inventory of toys and candy with automatic JSON persistence, color-coded stock alerts, and categorized reporting.
+Manages mixed inventory of toys and candy with automatic JSON persistence, color-coded stock alerts, and categorized reporting. Supports Swedish Krona (kr) pricing.
 
 ## Main Features
-- Add, Update, Delete, View Products
-- Color-coded alerts (Red for low stock, Yellow for near expiry)
-- Filtered Reports by Category
-- Automatic save/load with products.json
-- Hierarchical menu system for product creation
+- ✅ Add, Update, Delete, View Products
+- ✅ Color-coded alerts (RED = low stock <5, YELLOW = expiry <30 days)
+- ✅ Filtered Reports by Category
+- ✅ Automatic save/load with `products.json`
+- ✅ Hierarchical menu system
+- ✅ Support for Barbie, HotWheels, Baby Box via CustomToy
 
 ## Product Types
-- *Candy* - Flavor, Weight (g), ExpiryDate
-- *TeddyBear* - AgeRange 3+, Material (Plush)
-- *Lego* - AgeRange 5+, Pieces count
-- *PlaystationGame* - AgeRange 10+, Platform (PS5)
-- *Tillbehor* - AgeRange 10+, Category (Controller)
-- *CustomToy* - For Barbie, HotWheels, Cars - Custom age
+
+| Type                | Age | Extra Field                     | Example |
+|---------------------|-----|---------------------------------|---------|
+| **Candy**           | -   | Flavor, Weight(g), ExpiryDate   | Haribo |
+| **TeddyBear**       | 3+  | Material (Plush)                | Teddy |
+| **Lego**            | 5+  | Pieces                          | Lego City |
+| **PlaystationGame** | 10+ | Platform (PS5)                  | FIFA |
+| **Tillbehor**       | 10+ | Category (Controller)           | PS Controller |
+| **CustomToy**       | 4+  | CustomType, Description         | Barbie, HotWheels, Baby Box |
 
 ## Project Structure
 SweetAndPlay/
 ├── Models/
-│   ├── Product.cs
+│   ├── Product.cs (Base)
 │   ├── Candy.cs
 │   ├── Toy.cs
 │   └── Toys/
 │       ├── TeddyBear.cs
 │       ├── Lego.cs
-│       ├── DigitalGame.cs
 │       ├── PlaystationGame.cs
 │       ├── Tillbehor.cs
-│       └── CustomToy.cs
+│       └── CustomToy.cs 
 ├── Services/
 │   └── Inventory.cs
 ├── Program.cs
 └── products.json
+
+
+
 ## Color Coding System
-- *RED* = Low quantity (Qty < 5) - High priority
-- *YELLOW* = Expiry within 1 month (Candy) - Whole line yellow
-- *WHITE* = Normal stock
-- *GREEN* = Total value summary
+- **RED** = Low quantity (Qty < 5) - High priority
+- **YELLOW** = Expiry within 1 month (Candy) - Whole line yellow
+- **WHITE** = Normal stock
+- **CYAN** = Headers / Separators
+- **GREEN** = Total value summary
 
 ## Menu System
-*Main Menu:* Add Product, Update Product, Delete Product, View Products, Generate Report, Exit
 
-*Add Product:*
-- Menu 1: [1] Godis (Candy) / [2] Leksaker (Toys)
-- Menu 2: [1] Teddy Bear / [2] Lego / [3] Digital Games / [4] Custom Toy
-- Menu 3: [1] Playstation Game / [2] Tillbehor
+**Main Menu:** Add | Update | Delete | View Products | Generate Report | Exit
 
-*Generate Report:*
+**Add Product:**
+- Level 1: [1] Godis (Candy) / [2] Leksaker (Toys)
+- Level 2: [1] Teddy Bear / [2] Lego / [3] Digital Games / [4] Custom Toy (Barbie/HotWheels/Baby)
+- Level 3: [1] Playstation Game / [2] Tillbehor
+
+**Generate Report:**
 - [1] Godis (Candy only)
-- [2] Leksaker (Teddy + Lego + CustomToy)
-- [3] Digital Games (Playstation + Tillbehor)
+- [2] Leksaker (Teddy + Lego + CustomToy) 
+- [3] Digital Games (Playstation + Tillbehor only)
 - [4] Alla Produkter (All)
 
-## How To Run
-dotnet run
-- Requires .NET 6+
-- First run creates 5 sample products if empty
-- Auto-saves to products.json
-
 ## Inventory Methods
-- `AddProduct()` - Add or replace by ID
-- `GetProductById()` - Get by ID
-- `DeleteProduct()` - Delete with save
-- `UpdateProduct()` - Partial update (null = no change)
-- `SaveToFile()` / `LoadFromFile()` - JSON persistence
-- `ViewProducts()` - Color-coded table
-- `GenerateReport()` - Filtered reports
 
-## Notes
-- All classes inherit from Product base class
-- ProductType used for JSON type reconstruction
-- Price in Swedish Krona (kr)
-- Supplier tracked for all products
+- `AddProduct(Product p)` - Add or replace by ID + Save
+- `GetProductById(int id)` - Find by ID
+- `DeleteProduct(int id)` - Delete + Save
+- `UpdateProduct(...)` - Partial update (null = no change)
+- `SaveToFile() / LoadFromFile()` - JSON persistence with type reconstruction
+- `ViewProducts()` - Color-coded table view
+- `GenerateReport()` - Filtered reports with color logic
 
----
-Copy hayda kolo w 7otto bi GitHub README.md - byizbat 100%
+## Technical Notes
+All classes inherit from Product base class.
+ProductType property used for JSON type reconstruction.
+
+## Requirements
+.NET 10.0 SDK
+Visual Studio 2022/2026
