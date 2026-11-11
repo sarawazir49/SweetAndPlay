@@ -2,7 +2,6 @@
 
 public class CustomToy : Toy
 {
-    // Constructor for creating custom toys like Barbie, HotWheels, etc.
     public CustomToy(int id, string name, int qty, double price, string supplier, string ageRange, string customType, string description)
         : base(id, name, qty, price, supplier, ageRange)
     {
@@ -10,13 +9,14 @@ public class CustomToy : Toy
         Description = description;
     }
 
-    // Type of custom toy (e.g., Barbie, HotWheels, Squishy) - used for categorization
-    public string CustomType { get; set; }
+    public CustomToy() : base(0, "", 0, 0, "", "")
+    {
+        CustomType = "";
+        Description = "";
+    }
 
-    // Additional description for the toy (e.g., material, features)
-    public string Description { get; set; }
+    public string CustomType { get; set; } = "";
+    public string Description { get; set; } = "";
 
-    // Overrides ProductType to return custom type name instead of generic "Toy"
-    // This allows report to show "Barbie" or "HotWheels" as product type
-    public override string ProductType => CustomType;
+    public override string ProductType => "CustomToy";
 }

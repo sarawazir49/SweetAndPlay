@@ -10,7 +10,6 @@ public class Inventory
     private List<Product> products = new();
     private string filePath = "products.json";
 
-    // Adds or replaces a product by ID and saves to file
     public void AddProduct(Product p)
     {
         var old = products.FirstOrDefault(x => x.ID == p.ID);
@@ -19,10 +18,10 @@ public class Inventory
         SaveToFile();
     }
 
-    // Retrieves product by ID, returns null if not found
+    // Get product by ID, null if not found
     public Product? GetProductById(int id) => products.FirstOrDefault(x => x.ID == id);
 
-    // Deletes product by ID
+    // Delete product by ID
     public bool DeleteProduct(int id)
     {
         var p = products.FirstOrDefault(x => x.ID == id);
@@ -30,7 +29,7 @@ public class Inventory
         return false;
     }
 
-    // Updates product fields - only updates provided values
+    // Update product fields - only updates provided values
     public bool UpdateProduct(int id, int? newQty, double? newPrice, string? newName = null, string? newSupplier = null, string? newFlavor = null, DateTime? newExpiry = null)
     {
         var p = products.FirstOrDefault(x => x.ID == id);
@@ -52,7 +51,7 @@ public class Inventory
         return true;
     }
 
-    // Saves product list to JSON file
+    // Save product list to JSON file
     public void SaveToFile()
     {
         try
@@ -61,10 +60,10 @@ public class Inventory
             var objList = products.Select(x => (object)x).ToList();
             File.WriteAllText(filePath, JsonSerializer.Serialize(objList, options));
         }
-        catch (Exception ex) { Console.WriteLine($"Save fel: {ex.Message}"); }
+        catch (Exception ex) { Console.WriteLine($"Save error: {ex.Message}"); }
     }
 
-    // Loads products from JSON file and reconstructs correct types
+    // Load products from JSON and reconstruct correct concrete types
     public void LoadFromFile()
     {
         try
@@ -108,8 +107,18 @@ public class Inventory
                     string plat = el.TryGetProperty("Platform", out var pl) ? pl.GetString() ?? "PS5" : "PS5";
                     products.Add(new PlaystationGame(id, name, qty, price, sup, age, plat));
                 }
+                else if (type.Contains("CustomToy") || el.TryGetProperty("CustomType", out _) || type.Contains("Barbie") || type.Contains("HotWheels") || type.Contains("Baby"))
+                {
+                    // CustomToy - also handles legacy files where ProductType was Barbie / Baby box etc.
+                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "4+" : "4+";
+                    string customType = el.TryGetProperty("CustomType", out var ct) ? ct.GetString() ?? type : type;
+                    if (string.IsNullOrWhiteSpace(customType) || customType == "CustomToy") customType = "Barbie";
+                    string desc = el.TryGetProperty("Description", out var d) ? d.GetString() ?? "" : "";
+                    products.Add(new CustomToy(id, name, qty, price, sup, age, customType, desc));
+                }
                 else
                 {
+                    // Fallback to Tillbehor (Accessory)
                     string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "10+" : "10+";
                     string cat = el.TryGetProperty("Category", out var c) ? c.GetString() ?? "Accessory" : "Accessory";
                     products.Add(new Tillbehor(id, name, qty, price, sup, age, cat));
@@ -119,7 +128,7 @@ public class Inventory
         catch { }
     }
 
-    // Displays all products in a formatted table with color coding
+    // Display all products in formatted table with color coding
     public void ViewProducts()
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -133,7 +142,6 @@ public class Inventory
             bool low = p.Quantity < 5;
             bool expSoon = p is Candy c && (c.ExpiryDate - DateTime.Now).TotalDays <= 30;
 
-            // Priority: Red for low qty + expiry, Yellow for expiry, Red for low qty
             if (low && expSoon) Console.ForegroundColor = ConsoleColor.Red;
             else if (expSoon) Console.ForegroundColor = ConsoleColor.Yellow;
             else if (low) Console.ForegroundColor = ConsoleColor.Red;
@@ -149,7 +157,8 @@ public class Inventory
             else if (p is Lego lego) { age = lego.AgeRange; extra = $"{lego.Pieces} pcs"; }
             else if (p is PlaystationGame ps) { age = ps.AgeRange; extra = ps.Platform; }
             else if (p is Tillbehor tb) { age = tb.AgeRange; extra = tb.Category; }
-            else if (p is Candy candyView) { age = "All"; extra = candyView.Flavor; }
+            else if (p is CustomToy custom) { age = custom.AgeRange; extra = custom.CustomType; }
+            else if (p is Candy candyView) { age = "-"; extra = candyView.Flavor; }
 
             extra = extra.Length > 20 ? extra.Substring(0, 20) : extra.PadRight(20);
 
@@ -171,7 +180,7 @@ public class Inventory
         Console.ResetColor();
     }
 
-    // Generates filtered reports with whole-line color coding
+    // Generate filtered reports with whole-line color coding
     public void GenerateReport()
     {
         Console.Clear();
@@ -219,7 +228,6 @@ public class Inventory
                 isCandy = true;
                 expiry = candy.ExpiryDate.ToString("yyyy-MM-dd");
                 extra = candy.Flavor;
-                // Check if expiry is within 1 month from now - for yellow whole-line highlight
                 if (candy.ExpiryDate <= DateTime.Now.AddMonths(1))
                     isNearExpiry = true;
             }
@@ -231,16 +239,12 @@ public class Inventory
 
             bool low = p.Quantity < 5;
 
-            // Color logic for whole row: Red = low qty (priority), Yellow = expiry < 1 month, White = OK
-            if (low)
-                Console.ForegroundColor = ConsoleColor.Red;
-            else if (isNearExpiry)
-                Console.ForegroundColor = ConsoleColor.Yellow; // Whole line becomes yellow
-            else
-                Console.ForegroundColor = ConsoleColor.White;
+            // Color logic: Red = low qty (priority), Yellow = expiry < 1 month
+            if (low) Console.ForegroundColor = ConsoleColor.Red;
+            else if (isNearExpiry) Console.ForegroundColor = ConsoleColor.Yellow;
+            else Console.ForegroundColor = ConsoleColor.White;
 
-            string expiryDisplay = expiry;
-            if (!isCandy) expiryDisplay = "N/A";
+            string expiryDisplay = isCandy ? expiry : "N/A";
 
             Console.WriteLine($"{p.ID,-3} | {name} | {ageF} | {extraF} | {sup} | {expiryDisplay,-10} | {p.Price,5:F0}kr | {p.Quantity,-3} | {p.Quantity * p.Price,6:F0}kr | {(low ? "LOW" : isNearExpiry ? "EXPIRY!" : "OK")}");
         }
@@ -249,7 +253,7 @@ public class Inventory
         Console.WriteLine(line);
         Console.ResetColor();
 
-        // Legend for color coding
+        // Legend
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Write("RED = LOW QTY (<5)  ");
         Console.ResetColor();
@@ -258,7 +262,6 @@ public class Inventory
         Console.ResetColor();
         Console.WriteLine();
 
-        // Total inventory value summary
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"TOTALT VARDE: {list.Sum(x => x.Quantity * x.Price):F2} kr | ANTAL: {list.Count}");
         Console.ResetColor();
