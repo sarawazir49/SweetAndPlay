@@ -10,6 +10,7 @@ public class Inventory
     private List<Product> products = new();
     private string filePath = "products.json";
 
+    // Add or replace product by ID and save to file
     public void AddProduct(Product p)
     {
         var old = products.FirstOrDefault(x => x.ID == p.ID);
