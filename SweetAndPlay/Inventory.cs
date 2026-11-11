@@ -143,7 +143,7 @@ public class Inventory
             string sup = p.Supplier.Length > 8 ? p.Supplier.Substring(0, 8) : p.Supplier.PadRight(8);
             string type = p.ProductType.Length > 10 ? p.ProductType.Substring(0, 10) : p.ProductType.PadRight(10);
 
-            string age = "All";
+            string age = "-";
             string extra = "-";
             if (p is TeddyBear ted) { age = ted.AgeRange; extra = ted.Material; }
             else if (p is Lego lego) { age = lego.AgeRange; extra = $"{lego.Pieces} pcs"; }
