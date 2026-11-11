@@ -26,7 +26,6 @@ public class Inventory
         return false;
     }
 
-    // ===== UPDATE JDIDE - FIHA NAME + SUPPLIER + PRICE + QTY =====
     public bool UpdateProduct(int id, int? newQty, double? newPrice, string? newName = null, string? newSupplier = null, string? newFlavor = null, DateTime? newExpiry = null)
     {
         var p = products.FirstOrDefault(x => x.ID == id);
@@ -37,7 +36,6 @@ public class Inventory
         if (!string.IsNullOrWhiteSpace(newName)) p.Name = newName;
         if (!string.IsNullOrWhiteSpace(newSupplier)) p.Supplier = newSupplier;
 
-        // Iza Candy - fi flavor w expiry kamen
         if (p is Candy cand)
         {
             if (!string.IsNullOrWhiteSpace(newFlavor)) cand.Flavor = newFlavor;
@@ -86,25 +84,25 @@ public class Inventory
                 }
                 else if (type.Contains("Teddy"))
                 {
-                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "6+" : "6+";
+                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "3+" : "3+";
                     string mat = el.TryGetProperty("Material", out var m) ? m.GetString() ?? "Plush" : "Plush";
                     products.Add(new TeddyBear(id, name, qty, price, sup, age, mat));
                 }
                 else if (type.Contains("Lego"))
                 {
-                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "6+" : "6+";
+                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "5+" : "5+";
                     int pieces = el.TryGetProperty("Pieces", out var pc) ? pc.GetInt32() : 500;
                     products.Add(new Lego(id, name, qty, price, sup, age, pieces));
                 }
                 else if (type.Contains("Playstation"))
                 {
-                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "6+" : "6+";
+                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "10+" : "10+";
                     string plat = el.TryGetProperty("Platform", out var pl) ? pl.GetString() ?? "PS5" : "PS5";
                     products.Add(new PlaystationGame(id, name, qty, price, sup, age, plat));
                 }
                 else
                 {
-                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "6+" : "6+";
+                    string age = el.TryGetProperty("AgeRange", out var a) ? a.GetString() ?? "10+" : "10+";
                     string cat = el.TryGetProperty("Category", out var c) ? c.GetString() ?? "Accessory" : "Accessory";
                     products.Add(new Tillbehor(id, name, qty, price, sup, age, cat));
                 }
@@ -117,9 +115,9 @@ public class Inventory
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine($"\n--- VIEW {products.Count} produkter ---");
-        Console.WriteLine("-----------------------------------------------------------------------------");
-        Console.WriteLine("ID | Name           | Qty | Price  | Type       | Supplier | Expiry     | Flavor");
-        Console.WriteLine("-----------------------------------------------------------------------------");
+        Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
+        Console.WriteLine("ID | Name           | Qty | Price  | Type       | Supplier | Age  | Material/Category      | Expiry     | Flavor");
+        Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
         Console.ResetColor();
         foreach (var p in products.OrderBy(x => x.ID))
         {
@@ -133,21 +131,32 @@ public class Inventory
             string name = p.Name.Length > 14 ? p.Name.Substring(0, 14) : p.Name.PadRight(14);
             string sup = p.Supplier.Length > 8 ? p.Supplier.Substring(0, 8) : p.Supplier.PadRight(8);
             string type = p.ProductType.Length > 10 ? p.ProductType.Substring(0, 10) : p.ProductType.PadRight(10);
+
+            string age = "All";
+            string extra = "-";
+            if (p is TeddyBear ted) { age = ted.AgeRange; extra = ted.Material; }
+            else if (p is Lego lego) { age = lego.AgeRange; extra = $"{lego.Pieces} pcs"; }
+            else if (p is PlaystationGame ps) { age = ps.AgeRange; extra = ps.Platform; }
+            else if (p is Tillbehor tb) { age = tb.AgeRange; extra = tb.Category; }
+            else if (p is Candy) { age = "All"; extra = "Food"; }
+
+            extra = extra.Length > 20 ? extra.Substring(0, 20) : extra.PadRight(20);
+
             if (p is Candy cand)
             {
                 string exp = cand.ExpiryDate.ToString("yyyy-MM-dd");
                 string flav = cand.Flavor.Length > 10 ? cand.Flavor.Substring(0, 10) : cand.Flavor;
-                Console.WriteLine($"{p.ID,-2} | {name} | {p.Quantity,-3} | {p.Price,5:F0}kr | {type} | {sup} | {exp} | {flav}");
+                Console.WriteLine($"{p.ID,-2} | {name} | {p.Quantity,-3} | {p.Price,5:F0}kr | {type} | {sup} | {age,-4} | {extra} | {exp} | {flav}");
             }
             else
             {
-                Console.WriteLine($"{p.ID,-2} | {name} | {p.Quantity,-3} | {p.Price,5:F0}kr | {type} | {sup} | N/A        | -");
+                Console.WriteLine($"{p.ID,-2} | {name} | {p.Quantity,-3} | {p.Price,5:F0}kr | {type} | {sup} | {age,-4} | {extra} | N/A        | -");
             }
             Console.ResetColor();
         }
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("-----------------------------------------------------------------------------");
-        Console.WriteLine("RED=Low<5  YELLOW=Expiry<30d");
+        Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
+        Console.WriteLine("RED=Low<5  YELLOW=Expiry<30d | Age: Teddy 3+, Lego 5+, PS 10+, Tillbehör 10+");
         Console.ResetColor();
     }
 
@@ -157,7 +166,7 @@ public class Inventory
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("\n========== GENERATE REPORT MENU ==========");
         Console.WriteLine(" [1] Godis (Candy)");
-        Console.WriteLine(" [2] Leksaker (Toys)");
+        Console.WriteLine(" [2] Leksaker (Toys) - Shows Age & Material");
         Console.WriteLine(" [3] Alla Produkter");
         Console.WriteLine("==========================================");
         Console.ResetColor();
@@ -174,9 +183,9 @@ public class Inventory
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine($"\n--- {title} ---");
         Console.WriteLine($"Totalt Varde: {totalValue:F2} kr | Antal: {list.Count}");
-        Console.WriteLine("-----------------------------------------------------------------");
-        Console.WriteLine("ID | Name           | Supplier | Expiry     | Price  | Qty | Total   | Status");
-        Console.WriteLine("-----------------------------------------------------------------");
+        Console.WriteLine("-------------------------------------------------------------------------------------------------");
+        Console.WriteLine("ID | Name           | Age  | Material/Pieces/Platform | Supplier | Expiry     | Price  | Qty | Total   | Status");
+        Console.WriteLine("-------------------------------------------------------------------------------------------------");
         Console.ResetColor();
 
         foreach (var p in list.OrderBy(x => x.ID))
@@ -195,24 +204,33 @@ public class Inventory
             if (low) status = "LOW";
             if (expSoon) status = status == "LOW" ? "LOW+EXP" : "EXP SOON";
 
+            string age = "All";
+            string extra = "-";
+            if (p is TeddyBear ted) { age = ted.AgeRange; extra = $"Mat: {ted.Material}"; }
+            else if (p is Lego lego) { age = lego.AgeRange; extra = $"{lego.Pieces} pcs"; }
+            else if (p is PlaystationGame ps) { age = ps.AgeRange; extra = ps.Platform; }
+            else if (p is Tillbehor tb) { age = tb.AgeRange; extra = tb.Category; }
+
+            extra = extra.Length > 22 ? extra.Substring(0, 22) : extra.PadRight(22);
+
             if (p is Candy cand)
             {
                 string exp = cand.ExpiryDate.ToString("yyyy-MM-dd");
-                Console.WriteLine($"{p.ID,-2} | {name} | {sup} | {exp} | {p.Price,5:F0}kr | {p.Quantity,3} | {itemTotal,6:F0}kr | {status}");
+                Console.WriteLine($"{p.ID,-2} | {name} | {age,-4} | {extra} | {sup} | {exp} | {p.Price,5:F0}kr | {p.Quantity,3} | {itemTotal,6:F0}kr | {status}");
             }
             else
             {
-                Console.WriteLine($"{p.ID,-2} | {name} | {sup} | N/A        | {p.Price,5:F0}kr | {p.Quantity,3} | {itemTotal,6:F0}kr | {status}");
+                Console.WriteLine($"{p.ID,-2} | {name} | {age,-4} | {extra} | {sup} | N/A        | {p.Price,5:F0}kr | {p.Quantity,3} | {itemTotal,6:F0}kr | {status}");
             }
             Console.ResetColor();
         }
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("-----------------------------------------------------------------");
+        Console.WriteLine("-------------------------------------------------------------------------------------------------");
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"TOTALT VARDE: {totalValue:F2} kr | ANTAL: {list.Count}");
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("-----------------------------------------------------------------");
-        Console.WriteLine("RED=Low<5  YELLOW=Expiry<30d");
+        Console.WriteLine("-------------------------------------------------------------------------------------------------");
+        Console.WriteLine("Age: Teddy=3+ | Lego=5+ | PS=10+ | Tillbehör=10+ | Material: Plush, Pieces, Platform, Category");
         Console.ResetColor();
     }
 }

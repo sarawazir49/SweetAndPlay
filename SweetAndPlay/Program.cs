@@ -7,10 +7,10 @@ store.LoadFromFile();
 
 if (store.GetProductById(1) == null && store.GetProductById(2) == null)
 {
-    store.AddProduct(new TeddyBear(1, "Nalle Puh Teddy", 5, 199.99, "Scandic Toys AB", "0-3", "Plush"));
-    store.AddProduct(new Lego(2, "Lego Star Wars 500pcs", 15, 599, "LEGO Supplier", "6-12", 500));
-    store.AddProduct(new PlaystationGame(3, "FIFA 26 PS5", 8, 699, "Elgiganten AB", "7+", "PS5"));
-    store.AddProduct(new Tillbehor(4, "PS5 Controller Pink", 3, 799, "Webhallen", "6+", "Controller"));
+    store.AddProduct(new TeddyBear(1, "Nalle Puh Teddy", 5, 199.99, "Scandic Toys AB", "3+", "Plush"));
+    store.AddProduct(new Lego(2, "Lego Star Wars 500pcs", 15, 599, "LEGO Supplier", "5+", 500));
+    store.AddProduct(new PlaystationGame(3, "FIFA 26 PS5", 8, 699, "Elgiganten AB", "10+", "PS5"));
+    store.AddProduct(new Tillbehor(4, "PS5 Controller Pink", 3, 799, "Webhallen", "10+", "Controller"));
     store.AddProduct(new Candy(5, "Lösgodis Mix Sour", 20, 15.99, "Cloetta AB", "Sour Strawberry", 1000, DateTime.Now.AddDays(25)));
 }
 
@@ -66,7 +66,7 @@ string ch = Console.ReadLine() ?? "";
             Console.Write("Quantity: "); int qty = int.Parse(Console.ReadLine() ?? "0");
             Console.Write("Price (kr): "); double price = double.Parse(Console.ReadLine() ?? "0");
             Console.Write("Supplier: "); string sup = Console.ReadLine() ?? "Unknown";
-            string age = "6+";
+            
 
             if (t == "1")
             {
@@ -79,22 +79,24 @@ string ch = Console.ReadLine() ?? "";
             else if (t == "2")
             {
                 Console.Write("Material (Plush): "); string mat = Console.ReadLine() ?? "Plush";
-                store.AddProduct(new TeddyBear(id, name, qty, price, sup, age, mat));
+                store.AddProduct(new TeddyBear(id, name, qty, price, sup, "3+", mat));
             }
             else if (t == "3")
             {
                 Console.Write("Pieces: "); int pieces = int.TryParse(Console.ReadLine(), out int p) ? p : 500;
-                store.AddProduct(new Lego(id, name, qty, price, sup, age, pieces));
+                store.AddProduct(new Lego(id, name, qty, price, sup, "5+", pieces));
             }
             else if (t == "4")
             {
                 Console.Write("Platform (PS5): "); string plat = Console.ReadLine() ?? "PS5";
-                store.AddProduct(new PlaystationGame(id, name, qty, price, sup, age, plat));
+                store.AddProduct(new PlaystationGame(id, name, qty, price, sup, "10+", plat));
             }
+            
+           
             else
             {
                 Console.Write("Category: "); string cat = Console.ReadLine() ?? "Accessory";
-                store.AddProduct(new Tillbehor(id, name, qty, price, sup, age, cat));
+                store.AddProduct(new Tillbehor(id, name, qty, price, sup, "10+", cat));
             }
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"\n  ✅ Tillagd och sparad! {name}"); Console.ResetColor();
