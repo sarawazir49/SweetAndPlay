@@ -1,17 +1,17 @@
-﻿using SweetAndPlay.Models;
+﻿namespace SweetAndPlay.Models.Toys;
 
-namespace SweetAndPlay.Models.Toys;
-
-public class Tillbehor : Product
+public class Tillbehor : DigitalGame
 {
-    public string AgeRange { get; set; } = "6+";
-    public string Category { get; set; } = "Accessory";
-
-    public Tillbehor() { ProductType = "Tillbehor"; }
+    // Constructor for accessories (Swedish: Tillbehör)
     public Tillbehor(int id, string name, int qty, double price, string supplier, string ageRange, string category)
-        : base(id, name, qty, price, supplier)
+        : base(id, name, qty, price, supplier, ageRange)
     {
-        AgeRange = ageRange; Category = category;
-        ProductType = "Tillbehor";
+        Category = category;
     }
+
+    // Accessory category (e.g., Controller, Headset, Charging Cable)
+    public string Category { get; set; }
+
+    // Product type identifier - used for JSON saving/loading and report filtering
+    public override string ProductType => "Tillbehor";
 }

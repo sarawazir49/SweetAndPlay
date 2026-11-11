@@ -2,8 +2,16 @@
 
 public class Toy : Product
 {
-    public string AgeGroup { get; set; } = "3+";
-    public Toy() { ProductType = "Toy"; }
-    public Toy(int id, string name, int qty, double price, string supplier, string ageGroup) : base(id, name, qty, price, supplier)
-    { AgeGroup = ageGroup; ProductType = "Toy"; }
+    // Constructor for generic toy base class
+    public Toy(int id, string name, int qty, double price, string supplier, string ageRange)
+        : base(id, name, qty, price, supplier)
+    {
+        AgeRange = ageRange;
+    }
+
+    // Age recommendation (e.g., 3+, 5+, 10+) - defines target age group
+    public string AgeRange { get; set; }
+
+    // Product type identifier for saving/loading
+    public override string ProductType => "Toy";
 }

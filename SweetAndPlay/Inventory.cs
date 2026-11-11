@@ -6,9 +6,11 @@ namespace SweetAndPlay.Services;
 
 public class Inventory
 {
+    // In-memory product list and file path for persistence
     private List<Product> products = new();
     private string filePath = "products.json";
 
+    // Adds or replaces a product by ID and saves to file
     public void AddProduct(Product p)
     {
         var old = products.FirstOrDefault(x => x.ID == p.ID);
@@ -17,8 +19,10 @@ public class Inventory
         SaveToFile();
     }
 
+    // Retrieves product by ID, returns null if not found
     public Product? GetProductById(int id) => products.FirstOrDefault(x => x.ID == id);
 
+    // Deletes product by ID
     public bool DeleteProduct(int id)
     {
         var p = products.FirstOrDefault(x => x.ID == id);
@@ -26,6 +30,7 @@ public class Inventory
         return false;
     }
 
+    // Updates product fields - only updates provided values
     public bool UpdateProduct(int id, int? newQty, double? newPrice, string? newName = null, string? newSupplier = null, string? newFlavor = null, DateTime? newExpiry = null)
     {
         var p = products.FirstOrDefault(x => x.ID == id);
@@ -36,6 +41,7 @@ public class Inventory
         if (!string.IsNullOrWhiteSpace(newName)) p.Name = newName;
         if (!string.IsNullOrWhiteSpace(newSupplier)) p.Supplier = newSupplier;
 
+        // Candy-specific updates
         if (p is Candy cand)
         {
             if (!string.IsNullOrWhiteSpace(newFlavor)) cand.Flavor = newFlavor;
@@ -46,6 +52,7 @@ public class Inventory
         return true;
     }
 
+    // Saves product list to JSON file
     public void SaveToFile()
     {
         try
@@ -57,6 +64,7 @@ public class Inventory
         catch (Exception ex) { Console.WriteLine($"Save fel: {ex.Message}"); }
     }
 
+    // Loads products from JSON file and reconstructs correct types
     public void LoadFromFile()
     {
         try
@@ -111,6 +119,7 @@ public class Inventory
         catch { }
     }
 
+    // Displays all products in a formatted table with color coding
     public void ViewProducts()
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -123,6 +132,8 @@ public class Inventory
         {
             bool low = p.Quantity < 5;
             bool expSoon = p is Candy c && (c.ExpiryDate - DateTime.Now).TotalDays <= 30;
+
+            // Priority: Red for low qty + expiry, Yellow for expiry, Red for low qty
             if (low && expSoon) Console.ForegroundColor = ConsoleColor.Red;
             else if (expSoon) Console.ForegroundColor = ConsoleColor.Yellow;
             else if (low) Console.ForegroundColor = ConsoleColor.Red;
@@ -138,7 +149,7 @@ public class Inventory
             else if (p is Lego lego) { age = lego.AgeRange; extra = $"{lego.Pieces} pcs"; }
             else if (p is PlaystationGame ps) { age = ps.AgeRange; extra = ps.Platform; }
             else if (p is Tillbehor tb) { age = tb.AgeRange; extra = tb.Category; }
-            else if (p is Candy) { age = "All"; extra = "Food"; }
+            else if (p is Candy candyView) { age = "All"; extra = candyView.Flavor; }
 
             extra = extra.Length > 20 ? extra.Substring(0, 20) : extra.PadRight(20);
 
@@ -160,77 +171,99 @@ public class Inventory
         Console.ResetColor();
     }
 
+    // Generates filtered reports with whole-line color coding
     public void GenerateReport()
     {
         Console.Clear();
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("\n========== GENERATE REPORT MENU ==========");
+        Console.WriteLine("\n---------- GENERATE REPORT MENU ----------");
         Console.WriteLine(" [1] Godis (Candy)");
-        Console.WriteLine(" [2] Leksaker (Toys) - Shows Age & Material");
-        Console.WriteLine(" [3] Alla Produkter");
-        Console.WriteLine("==========================================");
-        Console.ResetColor();
-        Console.Write("\n  Valj [1-3]: ");
-        string ch = Console.ReadLine() ?? "3";
+        Console.WriteLine(" [2] Leksaker (Teddy + Lego + Barbie)");
+        Console.WriteLine(" [3] Digital Games (Playstation + Tillbehör)");
+        Console.WriteLine(" [4] Alla Produkter");
+        Console.WriteLine("------------------------------------------");
+        Console.Write("\n  Valj [1-4]: ");
+        string ch = Console.ReadLine() ?? "4";
 
-        var list = ch == "1" ? products.Where(p => p is Candy).ToList()
-                 : ch == "2" ? products.Where(p => p is not Candy).ToList()
-                 : products.ToList();
+        List<Product> list;
+        if (ch == "1") list = products.Where(p => p is Candy).ToList();
+        else if (ch == "2") list = products.Where(p => p is TeddyBear || p is Lego || p is CustomToy).ToList();
+        else if (ch == "3") list = products.Where(p => p is PlaystationGame || p is Tillbehor).ToList();
+        else list = products.ToList();
 
-        string title = ch == "1" ? "GODIS REPORT" : ch == "2" ? "LEKSAKER REPORT" : "ALLA PRODUKTER REPORT";
-        double totalValue = list.Sum(x => x.Quantity * x.Price);
+        string title = ch == "1" ? "GODIS REPORT" : ch == "2" ? "LEKSAKER REPORT" : ch == "3" ? "DIGITAL GAMES REPORT" : "ALLA PRODUKTER REPORT";
+        string line = new string('-', 130);
 
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine($"\n--- {title} ---");
-        Console.WriteLine($"Totalt Varde: {totalValue:F2} kr | Antal: {list.Count}");
-        Console.WriteLine("-------------------------------------------------------------------------------------------------");
-        Console.WriteLine("ID | Name           | Age  | Material/Pieces/Platform | Supplier | Expiry     | Price  | Qty | Total   | Status");
-        Console.WriteLine("-------------------------------------------------------------------------------------------------");
+        Console.WriteLine($"Totalt Varde: {list.Sum(x => x.Quantity * x.Price):F2} kr | Antal: {list.Count}");
+        Console.WriteLine(line);
+        Console.WriteLine($"{"ID",-3} | {"Name",-16} | {"Age",-3} | {"Material/Pieces",-20} | {"Supplier",-14} | {"Expiry",-10} | {"Price",-7} | {"Qty",-3} | {"Total",-8} | Status");
+        Console.WriteLine(line);
         Console.ResetColor();
 
         foreach (var p in list.OrderBy(x => x.ID))
         {
-            bool low = p.Quantity < 5;
-            bool expSoon = p is Candy c && (c.ExpiryDate - DateTime.Now).TotalDays <= 30;
-            if (low && expSoon) Console.ForegroundColor = ConsoleColor.Red;
-            else if (expSoon) Console.ForegroundColor = ConsoleColor.Yellow;
-            else if (low) Console.ForegroundColor = ConsoleColor.Red;
-            else Console.ForegroundColor = ConsoleColor.White;
-
-            string name = p.Name.Length > 14 ? p.Name.Substring(0, 14) : p.Name.PadRight(14);
-            string sup = p.Supplier.Length > 8 ? p.Supplier.Substring(0, 8) : p.Supplier.PadRight(8);
-            double itemTotal = p.Quantity * p.Price;
-            string status = "OK";
-            if (low) status = "LOW";
-            if (expSoon) status = status == "LOW" ? "LOW+EXP" : "EXP SOON";
-
             string age = "All";
             string extra = "-";
+            string expiry = "N/A";
+            bool isCandy = false;
+            bool isNearExpiry = false;
+
             if (p is TeddyBear ted) { age = ted.AgeRange; extra = $"Mat: {ted.Material}"; }
             else if (p is Lego lego) { age = lego.AgeRange; extra = $"{lego.Pieces} pcs"; }
+            else if (p is CustomToy cus) { age = cus.AgeRange; extra = cus.CustomType; }
             else if (p is PlaystationGame ps) { age = ps.AgeRange; extra = ps.Platform; }
             else if (p is Tillbehor tb) { age = tb.AgeRange; extra = tb.Category; }
-
-            extra = extra.Length > 22 ? extra.Substring(0, 22) : extra.PadRight(22);
-
-            if (p is Candy cand)
+            else if (p is Candy candy)
             {
-                string exp = cand.ExpiryDate.ToString("yyyy-MM-dd");
-                Console.WriteLine($"{p.ID,-2} | {name} | {age,-4} | {extra} | {sup} | {exp} | {p.Price,5:F0}kr | {p.Quantity,3} | {itemTotal,6:F0}kr | {status}");
+                isCandy = true;
+                expiry = candy.ExpiryDate.ToString("yyyy-MM-dd");
+                extra = candy.Flavor;
+                // Check if expiry is within 1 month from now - for yellow whole-line highlight
+                if (candy.ExpiryDate <= DateTime.Now.AddMonths(1))
+                    isNearExpiry = true;
             }
+
+            string name = p.Name.Length > 16 ? p.Name.Substring(0, 16) : p.Name.PadRight(16);
+            string extraF = extra.Length > 20 ? extra.Substring(0, 20) : extra.PadRight(20);
+            string sup = p.Supplier.Length > 14 ? p.Supplier.Substring(0, 14) : p.Supplier.PadRight(14);
+            string ageF = age.PadRight(3);
+
+            bool low = p.Quantity < 5;
+
+            // Color logic for whole row: Red = low qty (priority), Yellow = expiry < 1 month, White = OK
+            if (low)
+                Console.ForegroundColor = ConsoleColor.Red;
+            else if (isNearExpiry)
+                Console.ForegroundColor = ConsoleColor.Yellow; // Whole line becomes yellow
             else
-            {
-                Console.WriteLine($"{p.ID,-2} | {name} | {age,-4} | {extra} | {sup} | N/A        | {p.Price,5:F0}kr | {p.Quantity,3} | {itemTotal,6:F0}kr | {status}");
-            }
-            Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.White;
+
+            string expiryDisplay = expiry;
+            if (!isCandy) expiryDisplay = "N/A";
+
+            Console.WriteLine($"{p.ID,-3} | {name} | {ageF} | {extraF} | {sup} | {expiryDisplay,-10} | {p.Price,5:F0}kr | {p.Quantity,-3} | {p.Quantity * p.Price,6:F0}kr | {(low ? "LOW" : isNearExpiry ? "EXPIRY!" : "OK")}");
         }
+
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("-------------------------------------------------------------------------------------------------");
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"TOTALT VARDE: {totalValue:F2} kr | ANTAL: {list.Count}");
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("-------------------------------------------------------------------------------------------------");
-        Console.WriteLine("Age: Teddy=3+ | Lego=5+ | PS=10+ | Tillbehör=10+ | Material: Plush, Pieces, Platform, Category");
+        Console.WriteLine(line);
         Console.ResetColor();
+
+        // Legend for color coding
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write("RED = LOW QTY (<5)  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("YELLOW = EXPIRY < 1 MONTH");
+        Console.ResetColor();
+        Console.WriteLine();
+
+        // Total inventory value summary
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"TOTALT VARDE: {list.Sum(x => x.Quantity * x.Price):F2} kr | ANTAL: {list.Count}");
+        Console.ResetColor();
+
+        Console.WriteLine("\nTryck ENTER...");
+        Console.ReadLine();
     }
 }

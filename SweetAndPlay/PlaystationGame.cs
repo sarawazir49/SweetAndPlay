@@ -1,17 +1,17 @@
-﻿using SweetAndPlay.Models;
+﻿namespace SweetAndPlay.Models.Toys;
 
-namespace SweetAndPlay.Models.Toys;
-
-public class PlaystationGame : Product
+public class PlaystationGame : DigitalGame
 {
-    public string AgeRange { get; set; } = "7+";
-    public string Platform { get; set; } = "PS5";
-
-    public PlaystationGame() { ProductType = "PlaystationGame"; }
+    // Constructor for PlayStation games
     public PlaystationGame(int id, string name, int qty, double price, string supplier, string ageRange, string platform)
-        : base(id, name, qty, price, supplier)
+        : base(id, name, qty, price, supplier, ageRange)
     {
-        AgeRange = ageRange; Platform = platform;
-        ProductType = "PlaystationGame";
+        Platform = platform;
     }
+
+    // Gaming platform (e.g., PS5, PS4, PS3) - for filtering and display
+    public string Platform { get; set; }
+
+    // Product type identifier - used for JSON saving/loading and report filtering
+    public override string ProductType => "PlaystationGame";
 }
