@@ -2,7 +2,7 @@
 
 public class CustomToy : Toy
 {
-    // Main constructor with all fields
+    // Main constructor
     public CustomToy(int id, string name, int qty, double price, string supplier, string ageRange, string customType, string description)
         : base(id, name, qty, price, supplier, ageRange)
     {
@@ -10,16 +10,15 @@ public class CustomToy : Toy
         Description = description;
     }
 
-    // Parameterless constructor required for deserialization - FIX FOR CS7036
-    // Must call base with dummy values because Toy has no empty constructor
-    public CustomToy() : base(0, "", 0, 0.0, "", "")
+
+    public CustomToy() : base(0, "", 0, 0.0, "", "4+")
     {
-        CustomType = "";
+        CustomType = "Barbie";
         Description = "";
     }
 
-    public string CustomType { get; set; } = "";
-    public string Description { get; set; } = "";
+    public string CustomType { get; set; }
+    public string Description { get; set; }
 
     public override string ProductType => "CustomToy";
 }
