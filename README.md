@@ -67,7 +67,7 @@ SweetAndPlay/
 
 ## Inventory Methods
 
-- `AddProduct(Product p)` - Add or replace by ID + Save
+- `AddProduct(Product p)` - Add by ID + Save
 - `GetProductById(int id)` - Find by ID
 - `DeleteProduct(int id)` - Delete + Save
 - `UpdateProduct(...)` - Partial update (null = no change)
