@@ -292,4 +292,7 @@ public class Inventory
         Console.WriteLine("\nTryck ENTER...");
         Console.ReadLine();
     }
+ 
+
+
 }
