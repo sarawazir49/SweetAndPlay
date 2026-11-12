@@ -2,16 +2,22 @@
 
 namespace SweetAndPlay.Models.Toys;
 
-public class Lego : Product
+public class Lego : Toy
 {
-    public string AgeRange { get; set; } = "6-12";
     public int Pieces { get; set; } = 500;
 
-    public Lego() { ProductType = "Lego"; }
-    public Lego(int id, string name, int qty, double price, string supplier, string ageRange, int pieces)
-        : base(id, name, qty, price, supplier)
+   
+    public Lego() : base()
     {
-        AgeRange = ageRange; Pieces = pieces;
-        ProductType = "Lego";
+        AgeRange = "6-12";
     }
+
+    
+    public Lego(int id, string name, int qty, double price, string supplier, string ageRange, int pieces)
+        : base(id, name, qty, price, supplier, ageRange)
+    {
+        Pieces = pieces;
+    }
+
+    public override string ProductType => "Lego";
 }
