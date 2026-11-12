@@ -11,14 +11,36 @@ public class Inventory
     private string filePath = "products.json";
 
     // Add or replace product by ID and save to file
-    public void AddProduct(Product p)
+    // Add product - blocks duplicate ID
+    public bool AddProduct(Product p)
     {
         var old = products.FirstOrDefault(x => x.ID == p.ID);
-        if (old != null) products.Remove(old);
+        if (old != null)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"\n FEL: ID {p.ID} finns redan! ({old.Name} - {old.ProductType})");
+            Console.WriteLine($"Välj ID {GetNextAvailableId()} eller annat ledigt ID.");
+            Console.ResetColor();
+            Console.WriteLine("\nTryck ENTER for att fortsätta...");
+            Console.ReadLine();
+            return false; // ma bya3moul add
+        }
         products.Add(p);
         SaveToFile();
-    }
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"\n {p.Name} (ID {p.ID}) tillagd!");
+        Console.ResetColor();
+        return true;
 
+
+    }
+    public int GetNextAvailableId()
+    {
+        if (!products.Any()) return 1;
+        return products.Max(x => x.ID) + 1;
+    }
+  
+ 
     // Get product by ID, null if not found
     public Product? GetProductById(int id) => products.FirstOrDefault(x => x.ID == id);
 

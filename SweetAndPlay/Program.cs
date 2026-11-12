@@ -2,11 +2,10 @@
 using SweetAndPlay.Models.Toys;
 using SweetAndPlay.Services;
 
-// Initialize inventory and load existing data
 Inventory store = new Inventory();
 store.LoadFromFile();
 
-// Seed initial data if file is empty (first run)
+// Seed only once - use GetNextAvailableId logic safer
 if (store.GetProductById(1) == null && store.GetProductById(2) == null)
 {
     store.AddProduct(new TeddyBear(1, "Nalle Puh Teddy", 5, 199.99, "Scandic Toys AB", "3+", "Plush"));
@@ -16,18 +15,14 @@ if (store.GetProductById(1) == null && store.GetProductById(2) == null)
     store.AddProduct(new Candy(5, "Lösgodis Mix Sour", 20, 15.99, "Cloetta AB", "Sour Strawberry", 1000, DateTime.Now.AddDays(25)));
 }
 
-// Main application loop
 while (true)
 {
     Console.Clear();
     Console.ForegroundColor = ConsoleColor.Magenta;
     Console.WriteLine(@"
   ************************************************************
-    *                                                          *
     *              SWEET  AND  PLAY                             *
-    *                                                          *
     *             Toys & Candy Store Management                 *
-    *                                                          *
   ************************************************************
 ");
     Console.ResetColor();
@@ -46,7 +41,7 @@ while (true)
     string ch = Console.ReadLine() ?? "";
 
     if (ch == "4") { store.ViewProducts(); Console.WriteLine("\n  Tryck ENTER..."); Console.ReadLine(); }
-    else if (ch == "5") { store.GenerateReport(); Console.WriteLine("\n  Tryck ENTER..."); Console.ReadLine(); }
+    else if (ch == "5") { store.GenerateReport(); }
     else if (ch == "6") { store.SaveToFile(); break; }
     else if (ch == "1")
     {
@@ -55,36 +50,45 @@ while (true)
         Console.WriteLine("\n========== MENU 1: SELECT MAIN TYPE ==========");
         Console.WriteLine(" [1] Godis (Candy)");
         Console.WriteLine(" [2] Leksaker (Toys)");
+        Console.WriteLine($"  Nästa lediga ID: {store.GetNextAvailableId()}"); // NEW
         Console.WriteLine("===========================================");
         Console.ResetColor();
         Console.Write("Valj [1-2]: ");
         string menu1 = Console.ReadLine() ?? "1";
         try
         {
-            // Common product fields
-            Console.Write("\nID: "); int id = int.Parse(Console.ReadLine() ?? "0");
+            Console.Write("\nID: ");
+            if (!int.TryParse(Console.ReadLine(), out int id)) { Console.WriteLine("Ogiltigt ID!"); Console.ReadLine(); continue; }
+
+            // CHECK BEFORE ASKING OTHER FIELDS - NEW
+            if (store.GetProductById(id) != null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\n❌ ID {id} finns redan! Använd ID {store.GetNextAvailableId()}");
+                Console.ResetColor();
+                Console.WriteLine("\n  Tryck ENTER..."); Console.ReadLine();
+                continue;
+            }
+
             Console.Write("Name: "); string name = Console.ReadLine() ?? "";
             Console.Write("Quantity: "); int qty = int.Parse(Console.ReadLine() ?? "0");
             Console.Write("Price (kr): "); double price = double.Parse(Console.ReadLine() ?? "0");
             Console.Write("Supplier: "); string sup = Console.ReadLine() ?? "Unknown";
 
+            bool added = false;
             if (menu1 == "1")
             {
-                // Candy creation - requires flavor, weight and expiry
                 Console.Write("Flavor: "); string flav = Console.ReadLine() ?? "Sweet";
                 Console.Write("Weight (1000): "); int weight = int.TryParse(Console.ReadLine(), out int w) ? w : 1000;
                 Console.Write("Expiry yyyy-MM-dd (default=30d): "); string expStr = Console.ReadLine() ?? "";
                 DateTime exp = string.IsNullOrWhiteSpace(expStr) ? DateTime.Now.AddDays(30) : DateTime.Parse(expStr);
-                store.AddProduct(new Candy(id, name, qty, price, sup, flav, weight, exp));
+                added = store.AddProduct(new Candy(id, name, qty, price, sup, flav, weight, exp));
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("\n========== MENU 2: SELECT TOY TYPE ==========");
-                Console.WriteLine(" [1] Teddy Bear (3+)");
-                Console.WriteLine(" [2] Lego (5+)");
-                Console.WriteLine(" [3] Digital Games -> (Menu 3)");
-                Console.WriteLine(" [4] Custom Toy (Barbie, HotWheels, etc.)");
+                Console.WriteLine(" [1] Teddy Bear (3+)\n [2] Lego (5+)\n [3] Digital Games -> (Menu 3)\n [4] Custom Toy (Barbie, HotWheels, etc.)");
                 Console.WriteLine("==========================================");
                 Console.ResetColor();
                 Console.Write("Valj [1-4]: ");
@@ -92,34 +96,26 @@ while (true)
 
                 if (menu2 == "1")
                 {
-                    // Teddy bear - requires material
                     Console.Write("Material (Plush): "); string mat = Console.ReadLine() ?? "Plush";
-                    store.AddProduct(new TeddyBear(id, name, qty, price, sup, "3+", mat));
+                    added = store.AddProduct(new TeddyBear(id, name, qty, price, sup, "3+", mat));
                 }
                 else if (menu2 == "2")
                 {
-                    // Lego - requires piece count
                     Console.Write("Pieces: "); int pieces = int.TryParse(Console.ReadLine(), out int p) ? p : 500;
-                    store.AddProduct(new Lego(id, name, qty, price, sup, "5+", pieces));
+                    added = store.AddProduct(new Lego(id, name, qty, price, sup, "5+", pieces));
                 }
                 else if (menu2 == "4")
                 {
-                    // Custom toy - flexible type for Barbie, HotWheels, etc.
-                    Console.Write("Which type? (Barbie, HotWheels, Cars): ");
-                    string customType = Console.ReadLine() ?? "Barbie";
-                    Console.Write("Age (e.g 4+): ");
-                    string age = Console.ReadLine() ?? "4+";
-                    Console.Write("Description (e.g Doll): ");
-                    string desc = Console.ReadLine() ?? "";
-                    store.AddProduct(new CustomToy(id, name, qty, price, sup, age, customType, desc));
+                    Console.Write("Which type? (Barbie, HotWheels, Cars): "); string customType = Console.ReadLine() ?? "Barbie";
+                    Console.Write("Age (e.g 4+): "); string age = Console.ReadLine() ?? "4+";
+                    Console.Write("Description (e.g Doll): "); string desc = Console.ReadLine() ?? "";
+                    added = store.AddProduct(new CustomToy(id, name, qty, price, sup, age, customType, desc));
                 }
                 else
                 {
-                    // Menu 3: Digital games - PlayStation or Accessories
                     Console.ForegroundColor = ConsoleColor.Magenta;
                     Console.WriteLine("\n========== MENU 3: DIGITAL GAMES ==========");
-                    Console.WriteLine(" [1] Playstation Game (Age: 10+ | Platform)");
-                    Console.WriteLine(" [2] Tillbehör (Age: 10+ | Category)");
+                    Console.WriteLine(" [1] Playstation Game\n [2] Tillbehör");
                     Console.WriteLine("============================================");
                     Console.ResetColor();
                     Console.Write("Valj [1-2]: ");
@@ -128,17 +124,22 @@ while (true)
                     if (menu3 == "1")
                     {
                         Console.Write("Platform (PS5): "); string plat = Console.ReadLine() ?? "PS5";
-                        store.AddProduct(new PlaystationGame(id, name, qty, price, sup, "10+", plat));
+                        added = store.AddProduct(new PlaystationGame(id, name, qty, price, sup, "10+", plat));
                     }
                     else
                     {
                         Console.Write("Category: "); string cat = Console.ReadLine() ?? "Accessory";
-                        store.AddProduct(new Tillbehor(id, name, qty, price, sup, "10+", cat));
+                        added = store.AddProduct(new Tillbehor(id, name, qty, price, sup, "10+", cat));
                     }
                 }
             }
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\n  ✅ Added and saved! {name}"); Console.ResetColor();
+            // Only show success if actually added - FIXED
+            if (added)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"\n  ✅ Added and saved! {name}");
+                Console.ResetColor();
+            }
         }
         catch (Exception ex)
         {
