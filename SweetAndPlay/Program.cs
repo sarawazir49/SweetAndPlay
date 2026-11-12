@@ -35,17 +35,14 @@ while (true)
     Console.WriteLine("  3. Delete Product");
     Console.WriteLine("  4. View Products");
     Console.WriteLine("  5. Generate Report");
-    Console.WriteLine("  6. Search by ID"); // Search by ID feature
+    Console.WriteLine("  6. Search by ID");
     Console.WriteLine("  7. Exit");
     Console.WriteLine("  ------------------------------------------------");
     Console.Write("  Choose [1-7]: ");
     string ch = Console.ReadLine() ?? "";
 
-    // View all products with color coding
     if (ch == "4") { store.ViewProducts(); Console.WriteLine("\n  Press ENTER..."); Console.ReadLine(); }
-    // Generate report by category
     else if (ch == "5") { store.GenerateReport(); Console.WriteLine("\n  Press ENTER..."); Console.ReadLine(); }
-    // Search product by ID using GetProductById
     else if (ch == "6")
     {
         Console.Clear();
@@ -62,7 +59,6 @@ while (true)
                 Console.WriteLine($"  ID: {found.ID} | Name: {found.Name}");
                 Console.WriteLine($"  Qty: {found.Quantity} | Price: {found.Price} kr");
                 Console.WriteLine($"  Supplier: {found.Supplier}");
-                // Show candy-specific details if applicable
                 if (found is Candy c) Console.WriteLine($"  Flavor: {c.Flavor} | Expiry: {c.ExpiryDate:yyyy-MM-dd}");
                 Console.ResetColor();
             }
@@ -73,15 +69,10 @@ while (true)
                 Console.ResetColor();
             }
         }
-        else
-        {
-            Console.WriteLine("\n  ❌ Invalid ID!");
-        }
+        else Console.WriteLine("\n  ❌ Invalid ID!");
         Console.WriteLine("\n  Press ENTER..."); Console.ReadLine();
     }
-    // Save and exit
     else if (ch == "7") { store.SaveToFile(); break; }
-    // Add new product - multi-level menu
     else if (ch == "1")
     {
         Console.Clear();
@@ -89,33 +80,47 @@ while (true)
         Console.WriteLine("\n========== MENU 1: SELECT MAIN TYPE ==========");
         Console.WriteLine(" [1] Godis (Candy) - leaf, no children");
         Console.WriteLine(" [2] Leksaker (Toys) - has 4 sub-types");
-        Console.WriteLine($"  Next available ID: {store.GetNextAvailableId()}"); // Suggests next free ID
+        int suggestedId = store.GetNextAvailableId();
+        Console.WriteLine($"  Next available ID: {suggestedId}");
         Console.WriteLine("===========================================");
         Console.ResetColor();
-        Console.Write("Choose [1-2]: ");
-        string menu1 = Console.ReadLine() ?? "1";
+
+        // FIXED: Validation for Menu 1 - prevents 31 bug
+        string menu1;
+        while (true)
+        {
+            Console.Write("Choose [1-2]: ");
+            menu1 = Console.ReadLine() ?? "";
+            if (menu1 == "1" || menu1 == "2") break;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"  ❌ Invalid! Enter 1 or 2 only. (You entered '{menu1}' - {suggestedId} is for ID, not choice!)");
+            Console.ResetColor();
+        }
+
         try
         {
-            Console.Write("\nID: ");
-            if (!int.TryParse(Console.ReadLine(), out int id)) { Console.WriteLine("Invalid ID!"); Console.ReadLine(); continue; }
+            // FIXED: Auto ID with ENTER
+            Console.Write($"\nID [{suggestedId} = press ENTER]: ");
+            string idInput = Console.ReadLine() ?? "";
+            int id;
+            if (string.IsNullOrWhiteSpace(idInput)) id = suggestedId;
+            else if (!int.TryParse(idInput, out id)) { Console.WriteLine("Invalid ID!"); Console.ReadLine(); continue; }
 
-            // Prevent duplicate ID - check before asking other fields
             if (store.GetProductById(id) != null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\n❌ ID {id} already exists! Use ID {store.GetNextAvailableId()}");
+                Console.WriteLine($"\n❌ ID {id} already exists! Use ID {suggestedId}");
                 Console.ResetColor();
                 Console.WriteLine("\n  Press ENTER..."); Console.ReadLine();
                 continue;
             }
 
             Console.Write("Name: "); string name = Console.ReadLine() ?? "";
-            Console.Write("Quantity: "); int qty = int.Parse(Console.ReadLine() ?? "0");
-            Console.Write("Price (kr): "); double price = double.Parse(Console.ReadLine() ?? "0");
+            Console.Write("Quantity: "); int qty = int.TryParse(Console.ReadLine(), out int q) ? q : 0;
+            Console.Write("Price (kr): "); double price = double.TryParse(Console.ReadLine(), out double pr) ? pr : 0;
             Console.Write("Supplier: "); string sup = Console.ReadLine() ?? "Unknown";
 
             bool added = false;
-            // Candy branch - leaf node
             if (menu1 == "1")
             {
                 Console.Write("Flavor: "); string flav = Console.ReadLine() ?? "Sweet";
@@ -126,14 +131,21 @@ while (true)
             }
             else
             {
-                // Toys branch - second level menu
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("\n========== MENU 2: SELECT TOY TYPE ==========");
                 Console.WriteLine(" [1] Teddy Bear (3+)\n [2] Lego (5+)\n [3] Digital Games -> (Menu 3)\n [4] Custom Toy (Barbie, HotWheels, etc.)");
                 Console.WriteLine("==========================================");
                 Console.ResetColor();
-                Console.Write("Choose [1-4]: ");
-                string menu2 = Console.ReadLine() ?? "1";
+
+                // FIXED: Validation for Menu 2
+                string menu2;
+                while (true)
+                {
+                    Console.Write("Choose [1-4]: ");
+                    menu2 = Console.ReadLine() ?? "";
+                    if (menu2 == "1" || menu2 == "2" || menu2 == "3" || menu2 == "4") break;
+                    Console.WriteLine("  ❌ Choose 1-4 only!");
+                }
 
                 if (menu2 == "1")
                 {
@@ -154,14 +166,21 @@ while (true)
                 }
                 else
                 {
-                    // Digital Games - third level menu, has 2 children
                     Console.ForegroundColor = ConsoleColor.Magenta;
                     Console.WriteLine("\n========== MENU 3: DIGITAL GAMES ==========");
-                    Console.WriteLine(" [1] Playstation Game\n [2] Tillbehör (Accessory)");
+                    Console.WriteLine(" [1] Playstation Game\n [2] Tillbehör (Accessory) -> inherits from DigitalGames");
                     Console.WriteLine("============================================");
                     Console.ResetColor();
-                    Console.Write("Choose [1-2]: ");
-                    string menu3 = Console.ReadLine() ?? "1";
+
+                    // FIXED: Validation for Menu 3
+                    string menu3;
+                    while (true)
+                    {
+                        Console.Write("Choose [1-2]: ");
+                        menu3 = Console.ReadLine() ?? "";
+                        if (menu3 == "1" || menu3 == "2") break;
+                        Console.WriteLine("  ❌ Choose 1 or 2 only!");
+                    }
 
                     if (menu3 == "1")
                     {
@@ -175,11 +194,10 @@ while (true)
                     }
                 }
             }
-            // Show success only if actually added
             if (added)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"\n  ✅ Added and saved! {name}");
+                Console.WriteLine($"\n  ✅ Added and saved! {name} (ID {id})");
                 Console.ResetColor();
             }
         }
@@ -190,7 +208,6 @@ while (true)
         }
         Console.WriteLine("\n  Press ENTER..."); Console.ReadLine();
     }
-    // Update existing product
     else if (ch == "2")
     {
         Console.Clear();
@@ -218,7 +235,6 @@ while (true)
         }
         Console.WriteLine("\n  Press ENTER..."); Console.ReadLine();
     }
-    // Delete product by ID
     else if (ch == "3")
     {
         Console.Clear();
