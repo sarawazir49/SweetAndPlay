@@ -23,7 +23,7 @@ public class Inventory
             Console.ResetColor();
             Console.WriteLine("\nTryck ENTER for att fortsätta...");
             Console.ReadLine();
-            return false; // ma bya3moul add
+            return false; 
         }
         products.Add(p);
         SaveToFile();
