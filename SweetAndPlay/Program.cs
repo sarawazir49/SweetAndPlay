@@ -5,7 +5,6 @@ using SweetAndPlay.Services;
 Inventory store = new Inventory();
 store.LoadFromFile();
 
-// Seed data only on first run - checks if IDs 1 and 2 exist
 if (store.GetProductById(1) == null && store.GetProductById(2) == null)
 {
     store.AddProduct(new TeddyBear(1, "Nalle Puh Teddy", 5, 199.99, "Scandic Toys AB", "3+", "Plush"));
@@ -85,7 +84,6 @@ while (true)
         Console.WriteLine("===========================================");
         Console.ResetColor();
 
-        // FIXED: Validation for Menu 1 - prevents 31 bug
         string menu1;
         while (true)
         {
@@ -93,13 +91,12 @@ while (true)
             menu1 = Console.ReadLine() ?? "";
             if (menu1 == "1" || menu1 == "2") break;
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"  ❌ Invalid! Enter 1 or 2 only. (You entered '{menu1}' - {suggestedId} is for ID, not choice!)");
+            Console.WriteLine($"  ❌ Invalid! Enter 1 or 2 only.");
             Console.ResetColor();
         }
 
         try
         {
-            // FIXED: Auto ID with ENTER
             Console.Write($"\nID [{suggestedId} = press ENTER]: ");
             string idInput = Console.ReadLine() ?? "";
             int id;
@@ -126,7 +123,32 @@ while (true)
                 Console.Write("Flavor: "); string flav = Console.ReadLine() ?? "Sweet";
                 Console.Write("Weight (1000): "); int weight = int.TryParse(Console.ReadLine(), out int w) ? w : 1000;
                 Console.Write("Expiry yyyy-MM-dd (default=30d): "); string expStr = Console.ReadLine() ?? "";
-                DateTime exp = string.IsNullOrWhiteSpace(expStr) ? DateTime.Now.AddDays(30) : DateTime.Parse(expStr);
+
+                DateTime exp;
+                if (string.IsNullOrWhiteSpace(expStr))
+                {
+                    exp = DateTime.Now.AddDays(30);
+                }
+                else if (!DateTime.TryParse(expStr, out exp))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\n  ❌ Invalid date! Use yyyy-MM-dd");
+                    Console.ResetColor();
+                    Console.ReadLine();
+                    continue;
+                }
+
+                // BLOCK EXPIRED CANDY - HERE IS THE FIX
+                if (exp.Date < DateTime.Now.Date)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"\n  ❌ Cannot add expired candy! {exp:yyyy-MM-dd} is in the past!");
+                    Console.WriteLine($"  Today is {DateTime.Now:yyyy-MM-dd}");
+                    Console.ResetColor();
+                    Console.ReadLine();
+                    continue;
+                }
+
                 added = store.AddProduct(new Candy(id, name, qty, price, sup, flav, weight, exp));
             }
             else
@@ -137,7 +159,6 @@ while (true)
                 Console.WriteLine("==========================================");
                 Console.ResetColor();
 
-                // FIXED: Validation for Menu 2
                 string menu2;
                 while (true)
                 {
@@ -168,11 +189,10 @@ while (true)
                 {
                     Console.ForegroundColor = ConsoleColor.Magenta;
                     Console.WriteLine("\n========== MENU 3: DIGITAL GAMES ==========");
-                    Console.WriteLine(" [1] Playstation Game\n [2] Tillbehör (Accessory) -> inherits from DigitalGames");
+                    Console.WriteLine(" [1] Playstation Game\n [2] Tillbehör (Accessory)");
                     Console.WriteLine("============================================");
                     Console.ResetColor();
 
-                    // FIXED: Validation for Menu 3
                     string menu3;
                     while (true)
                     {

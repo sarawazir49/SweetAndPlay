@@ -163,9 +163,11 @@ public class Inventory
         foreach (var p in products.OrderBy(x => x.ID))
         {
             bool low = p.Quantity < 5;
-            bool expSoon = p is Candy c && (c.ExpiryDate - DateTime.Now).TotalDays <= 30;
+            bool isExpired = p is Candy ce && ce.ExpiryDate.Date < DateTime.Now.Date;
+            bool expSoon = p is Candy c && !isExpired && (c.ExpiryDate - DateTime.Now).TotalDays <= 30;
 
-            if (low && expSoon) Console.ForegroundColor = ConsoleColor.Red;
+            if (isExpired) Console.ForegroundColor = ConsoleColor.Magenta; // PURPLE = EXPIRED
+            else if (low && expSoon) Console.ForegroundColor = ConsoleColor.Red;
             else if (expSoon) Console.ForegroundColor = ConsoleColor.Yellow;
             else if (low) Console.ForegroundColor = ConsoleColor.Red;
             else Console.ForegroundColor = ConsoleColor.White;
@@ -199,7 +201,13 @@ public class Inventory
         }
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
-        Console.WriteLine("RED=Low<5  YELLOW=Expiry<30d | Age: Teddy 3+, Lego 5+, PS 10+, Tillbehör 10+");
+        Console.Write("RED=Low<5  ");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("YELLOW=Expiry<30d  ");
+        Console.ForegroundColor = ConsoleColor.Magenta;
+        Console.Write("MAGENTA=EXPIRED!  ");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("| Age: Teddy 3+, Lego 5+, PS 10+, Tillbehör 10+");
         Console.ResetColor();
     }
 
@@ -240,6 +248,7 @@ public class Inventory
             string expiry = "N/A";
             bool isCandy = false;
             bool isNearExpiry = false;
+            bool isExpired = false;
 
             if (p is TeddyBear ted) { age = ted.AgeRange; extra = $"Mat: {ted.Material}"; }
             else if (p is Lego lego) { age = lego.AgeRange; extra = $"{lego.Pieces} pcs"; }
@@ -251,7 +260,9 @@ public class Inventory
                 isCandy = true;
                 expiry = candy.ExpiryDate.ToString("yyyy-MM-dd");
                 extra = candy.Flavor;
-                if (candy.ExpiryDate <= DateTime.Now.AddMonths(1))
+                if (candy.ExpiryDate.Date < DateTime.Now.Date)
+                    isExpired = true;
+                else if (candy.ExpiryDate <= DateTime.Now.AddMonths(1))
                     isNearExpiry = true;
             }
 
@@ -262,14 +273,15 @@ public class Inventory
 
             bool low = p.Quantity < 5;
 
-            // Color logic: Red = low qty (priority), Yellow = expiry < 1 month
-            if (low) Console.ForegroundColor = ConsoleColor.Red;
+            // Color logic: Purple=expired, Red=low, Yellow=expiry<1month
+            if (isExpired) Console.ForegroundColor = ConsoleColor.Magenta;
+            else if (low) Console.ForegroundColor = ConsoleColor.Red;
             else if (isNearExpiry) Console.ForegroundColor = ConsoleColor.Yellow;
             else Console.ForegroundColor = ConsoleColor.White;
 
             string expiryDisplay = isCandy ? expiry : "N/A";
 
-            Console.WriteLine($"{p.ID,-3} | {name} | {ageF} | {extraF} | {sup} | {expiryDisplay,-10} | {p.Price,5:F0}kr | {p.Quantity,-3} | {p.Quantity * p.Price,6:F0}kr | {(low ? "LOW" : isNearExpiry ? "EXPIRY!" : "OK")}");
+            Console.WriteLine($"{p.ID,-3} | {name} | {ageF} | {extraF} | {sup} | {expiryDisplay,-10} | {p.Price,5:F0}kr | {p.Quantity,-3} | {p.Quantity * p.Price,6:F0}kr | {(isExpired ? "EXPIRED!" : low ? "LOW" : isNearExpiry ? "EXPIRY!" : "OK")}");
         }
 
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -277,6 +289,9 @@ public class Inventory
         Console.ResetColor();
 
         // Legend
+        Console.ForegroundColor = ConsoleColor.Magenta;
+        Console.Write("MAGENTA = EXPIRED!  ");
+        Console.ResetColor();
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Write("RED = LOW QTY (<5)  ");
         Console.ResetColor();
@@ -292,7 +307,6 @@ public class Inventory
         Console.WriteLine("\nTryck ENTER...");
         Console.ReadLine();
     }
- 
 
 
 }
